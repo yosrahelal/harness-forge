@@ -1,0 +1,71 @@
+# Architecture
+
+Forge is a layered prompt system. Each layer has one job and one loading strategy.
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ commands/   /forge:*   user-invoked entry points; drive the lifecycle      │  loaded: names only
+├──────────────────────────────────────────────────────────────────────────┤
+│ skills/     method & knowledge; auto-triggered by description or invoked   │  loaded: name+description,
+│             by commands; long material behind references/ (on demand)      │  body on activation
+├──────────────────────────────────────────────────────────────────────────┤
+│ agents/     core subagents with their own context window; delegated work   │  loaded: name+description
+│ roster/     opt-in personas by division (install.js --division / --auto)   │  not loaded until installed
+├──────────────────────────────────────────────────────────────────────────┤
+│ rules/      always-on standards (common + per language)                    │  loaded: every session (once installed)
+├──────────────────────────────────────────────────────────────────────────┤
+│ hooks/      deterministic guards and context injection (Node, no deps)     │  run by the harness
+├──────────────────────────────────────────────────────────────────────────┤
+│ templates/  playbooks/  contexts/   read on demand by commands and agents  │  never auto-loaded
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+## Flow of one feature
+
+```
+/forge:specify ──► specs/NNN/spec.md + checklists/requirements.md      (spec-driven-development, interview-me)
+/forge:clarify ──► spec.md § Clarifications
+/forge:plan    ──► plan.md, research.md, data-model.md, contracts/, quickstart.md   (planning, api-design, ADRs)
+/forge:tasks   ──► tasks.md  (T001 [P] [US1] … with file paths)
+/forge:build | /forge:implement ──► commits, tests   (incremental-implementation + tdd; delegates to tdd-guide)
+/forge:verify  ──► PASS/FAIL report (verification-loop)
+/forge:review  ──► findings by severity (code-review; fan-out to code-reviewer, security-reviewer, …)
+/forge:converge──► tasks.md appended or "Converged"
+/forge:ship    ──► GO/NO-GO + rollback plan (fan-out: code-reviewer, security-reviewer, test-engineer)
+/forge:pr      ──► pull request (pr skill)
+```
+
+State lives in the project: `specs/`, `.forge/{constitution.md, feature.json, bugs/, sessions/, pipeline/, state/}`. The plugin itself stays stateless.
+
+## Resolution of the active feature
+
+`scripts/sdd/feature-paths.js`: `--feature` argument → `.forge/feature.json` → git branch `NNN-name` → newest `specs/NNN-*`. Commands call it with `--require-*` flags so missing artifacts fail early with the command to run next.
+
+## Delegation model
+
+- Direct invocation (one agent, one report) is the default and the cheapest.
+- Commands fan out in a single assistant turn when inputs are independent (`/forge:ship`, `/forge:review` on big diffs) and merge in the main context.
+- Subagents never spawn subagents. `orchestrator` is the only agent that coordinates others, and it writes its state to `.forge/pipeline/`.
+- Patterns and anti-patterns: `playbooks/checklists/orchestration-patterns.md`.
+
+## Naming
+
+- Plugin-scoped: skills `forge:<skill>`, agents `forge:<agent>`, commands `/forge:<command>`. Bare names after a manual install.
+- One canonical name per concept (`tdd`, `code-review`, `debugging`, `git-workflow`, `api-design`, `security`, `planning`); alternates live as `references/*.md` inside the canonical skill.
+
+## Hooks
+
+| Event | Script | Effect |
+|---|---|---|
+| SessionStart | session-start.js | context injection (toolchain, files to read, active feature, last session) |
+| PreToolUse Bash | guard-bash.js | block destructive commands (exit 2), warn on risky ones |
+| PostToolUse Edit/Write | post-edit.js | formatter, debug-statement warnings, optional tsc |
+| PostToolUse * | suggest-compact.js | strategic compaction reminder |
+| PreCompact | pre-compact.js | state snapshot to `.forge/sessions/` |
+
+## Extending
+
+- New skill: `skills/<category>/<name>/SKILL.md` (+ `references/`), name == directory, trigger-rich description. Run `validate.js`, `catalog.js`.
+- New agent: `agents/<name>.md` (core) or `roster/<division>/<name>.md`.
+- New command: `commands/<name>.md`, ≤60 lines, delegate the method to a skill.
+- Project overrides: `.forge/templates/spec-template.md` overrides the plugin template; `.claude/rules/` and `.claude/agents/` override by name.

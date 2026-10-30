@@ -1,0 +1,28 @@
+{
+  "name": "forge",
+  "version": "1.0.0",
+  "description": "Forge: one productivity-first plugin that merges spec-kit (Spec-Driven Development), ECC (agents, skills, rules, hooks), agency-agents (specialist personas and NEXUS playbooks), Matt Pocock's skills (grilling, TDD, tickets) and Addy Osmani's agent-skills (spec → plan → build → test → review → ship).",
+  "author": { "name": "helyos" },
+  "repository": "https://github.com/helyos/agent-forge",
+  "license": "MIT",
+  "keywords": ["claude-code", "agents", "skills", "spec-driven-development", "tdd", "code-review", "orchestration", "productivity"],
+  "agents": ["./agents/"],
+  "skills": [
+    "./skills/workflow/",
+    "./skills/engineering/",
+    "./skills/languages/",
+    "./skills/agentic/",
+    "./skills/product/",
+    "./skills/ml/"
+  ],
+  "commands": ["./commands/"],
+  "hooks": "./hooks/hooks.json",
+  "userConfig": {
+    "hooks_enabled": {
+      "type": "boolean",
+      "title": "Enable Forge hooks",
+      "description": "Run the Forge lifecycle hooks (session context, destructive-command guard, post-edit format/typecheck, compact suggestions, pre-compact snapshot). Set FORGE_HOOKS=off to disable at runtime.",
+      "default": true
+    }
+  }
+}
