@@ -65,6 +65,14 @@ for (const f of walk(ROOT, (p) => p.endsWith('.md') && !p.includes('/upstream/')
   if (/(?<![\w/])ecc:[a-z]/.test(s)) err(`leftover 'ecc:' prefix in ${path.relative(ROOT, f)}`);
   if (/setup-matt-pocock-skills/.test(s)) err(`leftover setup-matt-pocock-skills in ${path.relative(ROOT, f)}`);
 }
+// packs (claude.ai exports): referenced skills and files exist
+if (fs.existsSync(path.join(ROOT, 'packs'))) {
+  for (const f of walk(path.join(ROOT, 'packs'), (p) => p.endsWith('pack.json'))) {
+    const pack = JSON.parse(fs.readFileSync(f, 'utf8'));
+    for (const s of pack.skills || []) { const n = typeof s === 'string' ? s : s.name; if (!skillNames.has(n)) err(`pack ${pack.name}: unknown skill '${n}'`); }
+    for (const p of pack.projects || []) for (const rel of [p.instructions, ...(p.knowledge || [])]) if (!fs.existsSync(path.join(ROOT, rel))) err(`pack ${pack.name}: missing file ${rel}`);
+  }
+}
 // plugin manifest
 const plugin = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8'));
 for (const p of [...plugin.agents, ...plugin.skills, ...plugin.commands, plugin.hooks]) {

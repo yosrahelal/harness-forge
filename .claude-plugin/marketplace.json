@@ -1,13 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "agent-forge",
-  "description": "Local marketplace for the Forge plugin (merged spec-kit + ECC + agency-agents + mattpocock/skills + addyosmani/agent-skills).",
-  "owner": { "name": "helyos" },
+  "name": "harness-forge",
+  "description": "Marketplace for the Forge plugin (merged spec-kit + ECC + agency-agents + mattpocock/skills + addyosmani/agent-skills).",
+  "owner": { "name": "yosrahelal" },
   "plugins": [
     {
       "name": "forge",
       "source": "./",
-      "description": "Productivity-first engineering harness: SDD lifecycle commands, 27 core agents, 108 roster personas, 129 skills, rules, hooks and NEXUS playbooks.",
+      "description": "Productivity-first engineering harness: SDD lifecycle commands, 29 core agents, 108 roster personas, 135 skills, rules, hooks and NEXUS playbooks.",
       "category": "engineering",
       "keywords": ["sdd", "tdd", "review", "orchestration", "skills", "agents"]
     }

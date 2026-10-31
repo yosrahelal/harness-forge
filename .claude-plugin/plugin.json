@@ -2,8 +2,8 @@
   "name": "forge",
   "version": "1.0.0",
   "description": "Forge: one productivity-first plugin that merges spec-kit (Spec-Driven Development), ECC (agents, skills, rules, hooks), agency-agents (specialist personas and NEXUS playbooks), Matt Pocock's skills (grilling, TDD, tickets) and Addy Osmani's agent-skills (spec → plan → build → test → review → ship).",
-  "author": { "name": "helyos" },
-  "repository": "https://github.com/helyos/agent-forge",
+  "author": { "name": "yosrahelal" },
+  "repository": "https://github.com/yosrahelal/harness-forge",
   "license": "MIT",
   "keywords": ["claude-code", "agents", "skills", "spec-driven-development", "tdd", "code-review", "orchestration", "productivity"],
   "agents": ["./agents/"],
@@ -13,7 +13,8 @@
     "./skills/languages/",
     "./skills/agentic/",
     "./skills/product/",
-    "./skills/ml/"
+    "./skills/ml/",
+    "./skills/blockchain/"
   ],
   "commands": ["./commands/"],
   "hooks": "./hooks/hooks.json",

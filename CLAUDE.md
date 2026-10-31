@@ -1,4 +1,4 @@
-# CLAUDE.md — working in the agent-forge repository
+# CLAUDE.md — working in the harness-forge repository
 
 This repository **is** the Forge plugin: agents, skills, commands, rules, hooks, templates and playbooks for Claude Code (and other harnesses via `npx skills`). It contains no application code.
 

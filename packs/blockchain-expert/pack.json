@@ -1,0 +1,61 @@
+{
+  "name": "blockchain-expert",
+  "title": "Expert blockchain — pack claude.ai",
+  "target": "claude-web",
+  "maxDescription": 200,
+  "skills": [
+    "blockchain-project-analysis",
+    "smart-contract-audit",
+    "blockchain-architecture",
+    "tokenization-domain",
+    "blockchain-docs",
+    "blockchain-deck",
+    {
+      "name": "council",
+      "description": "Convenes a four-voice council (own view, Skeptic, Pragmatist, Critic) for ambiguous decisions and go/no-go calls. Use when several valid paths exist and dissent is needed before choosing.",
+      "note": "There are no subagents here. Write the Skeptic, Pragmatist and Critic voices one after the other, each drafted from the question and the facts block only, before writing your own view, so that your opinion does not anchor them. Then synthesise as described above."
+    },
+    {
+      "name": "grilling",
+      "description": "Grills the user relentlessly about a plan, decision or idea, round by round, with a recommended answer per question. Use to stress-test thinking or when the user says 'grill me'.",
+      "note": "There are no sub-agents here. Look facts up yourself in the project knowledge, the uploaded files or with web search, and never ask the user for a fact you can find."
+    },
+    {
+      "name": "market-research",
+      "description": "Conducts market, vendor and technology research with cited sources and a decision-oriented summary. Use for competitor or vendor comparisons, technology scans, due diligence or market sizing.",
+      "note": "Use the built-in web search and cite every source with its date. For a long multi-source investigation, suggest the Research mode."
+    }
+  ],
+  "projects": [
+    {
+      "name": "expert-blockchain",
+      "title": "Expert blockchain",
+      "instructions": "packs/blockchain-expert/projects/expert-blockchain.md",
+      "knowledge": [
+        "roster/engineering/solidity-smart-contract-engineer.md",
+        "roster/engineering/software-architect.md",
+        "roster/specialized/executive-summary-generator.md"
+      ]
+    },
+    {
+      "name": "audit-smart-contracts",
+      "title": "Audit smart contracts",
+      "instructions": "packs/blockchain-expert/projects/audit-smart-contracts.md",
+      "knowledge": [
+        "roster/security/blockchain-security-auditor.md",
+        "roster/engineering/solidity-smart-contract-engineer.md",
+        "playbooks/checklists/security-checklist.md"
+      ]
+    },
+    {
+      "name": "architecture-blockchain",
+      "title": "Architecture blockchain",
+      "instructions": "packs/blockchain-expert/projects/architecture-blockchain.md",
+      "knowledge": [
+        "roster/engineering/software-architect.md",
+        "roster/security/security-architect.md",
+        "playbooks/checklists/observability-checklist.md"
+      ]
+    }
+  ]
+}

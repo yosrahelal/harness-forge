@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-sync-upstream.py — rebuild the imported parts of agent-forge from the five upstream repos.
+sync-upstream.py — rebuild the imported parts of harness-forge from the five upstream repos.
 
 Usage:
-  python3 scripts/sync-upstream.py --sources /path/to/clones --target /path/to/agent-forge
+  python3 scripts/sync-upstream.py --sources /path/to/clones --target /path/to/harness-forge
 
 Expected clone layout under --sources:
   spec-kit/  ECC/  agency-agents/  mattpocock-skills/  addyosmani-skills/

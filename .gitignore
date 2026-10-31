@@ -4,3 +4,4 @@ node_modules/
 .forge/sessions/
 .forge/state/
 .claude/settings.local.json
+dist/

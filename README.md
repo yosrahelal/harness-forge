@@ -10,7 +10,7 @@ Forge réunit en **un plugin Claude Code** (utilisable aussi depuis Codex, Curso
 | [mattpocock/skills](https://github.com/mattpocock/skills) | grilling, TDD aux seams, domain modeling/GLOSSARY, to-spec/to-tickets/triage/wayfinder, handoff, retro, research, prototype |
 | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | Le cycle quotidien spec → plan → build → test → review → ship, interview-me, idea-refine, constraint/doubt/source-driven development, checklists partagées |
 
-Chiffres : **33 commandes**, **28 agents cœur** + **108 personas** opt-in, **129 skills**, **22 jeux de règles**, **5 hooks**, 9 templates, playbooks NEXUS + checklists. Tout est MIT (voir `NOTICE.md`), chaque fichier importé porte son `origin:`.
+Chiffres : **34 commandes**, **29 agents cœur** + **108 personas** opt-in, **135 skills**, **22 jeux de règles**, **5 hooks**, 9 templates, playbooks NEXUS + checklists. Tout est MIT (voir `NOTICE.md`), chaque fichier importé porte son `origin:`.
 
 ```text
 idée ──▶ spec ──▶ plan ──▶ tasks ──▶ build (TDD) ──▶ verify ──▶ review ──▶ converge ──▶ ship ──▶ learn
@@ -22,12 +22,13 @@ idée ──▶ spec ──▶ plan ──▶ tasks ──▶ build (TDD) ──
 ### Claude Code (plugin, recommandé)
 
 ```bash
-# depuis ce dossier, en mode développement (toujours à jour avec le dépôt)
-claude --plugin-dir /home/helyos/projects/agent-forge
+# depuis GitHub (recommandé) :
+/plugin marketplace add yosrahelal/harness-forge
+/plugin install forge@harness-forge
 
-# ou via la marketplace locale, une fois :
-/plugin marketplace add /home/helyos/projects/agent-forge
-/plugin install forge@agent-forge
+# ou depuis un clone local, en mode développement (toujours à jour avec le dépôt) :
+git clone https://github.com/yosrahelal/harness-forge.git
+claude --plugin-dir ./harness-forge
 ```
 
 Puis dans un projet : `/forge:init` (constitution, règles et reviewers adaptés à la stack, CLAUDE.md, tracker, CONSTRAINTS.md).
@@ -43,9 +44,17 @@ node scripts/install.js --scope user --all                      # tout, pour l'u
 node scripts/install.js --scope project --uninstall
 ```
 
+### Claude web, desktop et mobile (claude.ai, sans Claude Code)
+
+```bash
+node scripts/export-claude-web.js blockchain-expert   # → dist/claude-web/blockchain-expert/
+```
+
+Produit un `.zip` par skill (à importer dans Paramètres → Capacités → Skills) et des Projets prêts à créer (instructions + fichiers de connaissance). Pas de sous-agents, commandes ni hooks sur claude.ai. Guide : [packs/blockchain-expert/README.md](packs/blockchain-expert/README.md).
+
 ### Autres harnais
 
-`npx skills add /home/helyos/projects/agent-forge` (ou l'URL du dépôt) installe les skills dans Codex, Cursor, Gemini, OpenCode, Copilot… Les commandes `/forge:*` sont propres à Claude Code ; ailleurs, invoquez le skill correspondant par son nom. Les personas du `roster/` se copient tels quels dans le dossier agents du harnais.
+`npx skills add yosrahelal/harness-forge` (ou le chemin d'un clone local) installe les skills dans Codex, Cursor, Gemini, OpenCode, Copilot… Les commandes `/forge:*` sont propres à Claude Code ; ailleurs, invoquez le skill correspondant par son nom. Les personas du `roster/` se copient tels quels dans le dossier agents du harnais.
 
 ## Les workflows qui font gagner du temps
 
@@ -80,7 +89,7 @@ agents/        28 sous-agents cœur, chargés par le plugin (planner, architect,
                tdd-guide, test-engineer, build-error-resolver, e2e-runner, reality-checker, orchestrator…)
 roster/        108 personas opt-in par division : languages, engineering, testing, product, design,
                project-management, security, specialized, growth, ml
-skills/        129 skills : workflow (cycle de vie), engineering, languages, agentic, product, ml
+skills/        135 skills : workflow (cycle de vie), engineering, languages, agentic, product, ml, blockchain
 commands/      33 commandes /forge:*
 rules/         règles toujours actives : common + 21 langages/frameworks
 hooks/         SessionStart (contexte), guard Bash (bloque force-push, reset --hard, rm -rf /…),
@@ -89,7 +98,8 @@ templates/     constitution, spec, plan, tasks, checklist, ADR, glossaire, sessi
 playbooks/     NEXUS (phases 0-6, runbooks, coordination), checklists (sécurité, perf, a11y,
                observabilité, tests, definition of done), patterns d'orchestration, essai SDD
 contexts/      profils dev / review / research
-scripts/       install.js, validate.js, catalog.js, sync-upstream.py, sdd/new-feature.js, sdd/feature-paths.js
+packs/         packs pour claude.ai (skills zippés + Projets), ex. blockchain-expert
+scripts/       install.js, validate.js, catalog.js, export-claude-web.js, sync-upstream.py, sdd/new-feature.js, sdd/feature-paths.js
 docs/          ARCHITECTURE, WORKFLOWS, SOURCES (décisions de fusion), INSTALL, CATALOG (généré)
 ```
 
@@ -99,7 +109,7 @@ Artefacts produits dans vos projets : `specs/NNN-nom/{spec,plan,tasks,research,d
 
 1. **Une seule entrée par concept.** Quand plusieurs sources couvraient la même chose (TDD, revue, debugging, git, API, sécurité, ADR, a11y), un skill primaire a été retenu et les autres sont conservés en `references/` lisibles à la demande. Pas de doublons de déclenchement, aucune connaissance perdue.
 2. **Les commandes pilotent, les skills portent la méthode, les agents délèguent, les règles sont toujours actives.** Spec-kit a été réécrit sans sa CLI Python : deux petits scripts Node suffisent.
-3. **Contexte léger par défaut.** 28 agents chargés, le reste à la demande (`--division`, `--auto`). Boilerplate « prompt defense » de ECC retiré des 50 agents et remplacé par une règle commune.
+3. **Contexte léger par défaut.** 29 agents chargés, le reste à la demande (`--division`, `--auto`). Boilerplate « prompt defense » de ECC retiré des 50 agents et remplacé par une règle commune.
 4. **Hooks sans dépendances** (Node ≥ 18, pas de `jq`), désactivables avec `FORGE_HOOKS=off`.
 5. **Traçabilité** : `origin:` partout, `upstream/manifest.json`, `scripts/sync-upstream.py` pour resynchroniser.
 
