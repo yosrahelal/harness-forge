@@ -10,7 +10,7 @@ Forge réunit en **un plugin Claude Code** (utilisable aussi depuis Codex, Curso
 | [mattpocock/skills](https://github.com/mattpocock/skills) | grilling, TDD aux seams, domain modeling/GLOSSARY, to-spec/to-tickets/triage/wayfinder, handoff, retro, research, prototype |
 | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | Le cycle quotidien spec → plan → build → test → review → ship, interview-me, idea-refine, constraint/doubt/source-driven development, checklists partagées |
 
-Chiffres : **34 commandes**, **29 agents cœur** + **108 personas** opt-in, **135 skills**, **22 jeux de règles**, **5 hooks**, 9 templates, playbooks NEXUS + checklists. Tout est MIT (voir `NOTICE.md`), chaque fichier importé porte son `origin:`.
+Chiffres : **35 commandes**, **29 agents cœur** + **108 personas** opt-in, **135 skills**, **22 jeux de règles**, **5 hooks**, 9 templates, playbooks NEXUS + checklists. Tout est MIT (voir `NOTICE.md`), chaque fichier importé porte son `origin:`.
 
 ```text
 idée ──▶ spec ──▶ plan ──▶ tasks ──▶ build (TDD) ──▶ verify ──▶ review ──▶ converge ──▶ ship ──▶ learn
@@ -78,6 +78,8 @@ Détails et variantes dans [docs/WORKFLOWS.md](docs/WORKFLOWS.md).
 
 **Travail plus grand qu'une session** : skill `wayfinder` (carte de décisions sur le tracker), `/forge:orchestrate` (pipeline multi-agents NEXUS avec gates et boucle Dev↔QA), `/forge:save-session` / `/forge:resume-session`.
 
+**Projet blockchain réglementé (EVM ou Soroban)** : `/forge:blockchain-pipeline EURxt --chain soroban` installe dans le projet le pipeline v2 : 19 agents monotâches (analyste → architecte → concepteur → développeur → testeur → red team → six auditeurs + juge → relecteur → documentaliste → release → run → upgrade), un `CLAUDE.md` orchestrateur, des hooks qui bloquent les écritures hors périmètre, toute signature, tout secret et tout RPC distant, et six gates scriptées (`make gate-N`) qui décident du passage d'étape. Méthode : [playbooks/blockchain-pipeline.md](playbooks/blockchain-pipeline.md).
+
 **Cadrage d'idée** : `/forge:grill-me`, skill `idea-refine`, skill `council` (quatre voix pour trancher), `/forge:constraints` pour écrire la barre de qualité une fois pour toutes.
 
 Pour savoir quoi utiliser : `/forge:guide <ce que vous essayez de faire>`.
@@ -90,7 +92,7 @@ agents/        28 sous-agents cœur, chargés par le plugin (planner, architect,
 roster/        108 personas opt-in par division : languages, engineering, testing, product, design,
                project-management, security, specialized, growth, ml
 skills/        135 skills : workflow (cycle de vie), engineering, languages, agentic, product, ml, blockchain
-commands/      33 commandes /forge:*
+commands/      35 commandes /forge:*
 rules/         règles toujours actives : common + 21 langages/frameworks
 hooks/         SessionStart (contexte), guard Bash (bloque force-push, reset --hard, rm -rf /…),
                post-edit (format + alertes console.log), suggest-compact, pre-compact (snapshot)
@@ -99,7 +101,8 @@ playbooks/     NEXUS (phases 0-6, runbooks, coordination), checklists (sécurit�
                observabilité, tests, definition of done), patterns d'orchestration, essai SDD
 contexts/      profils dev / review / research
 packs/         packs pour claude.ai (skills zippés + Projets), ex. blockchain-expert
-scripts/       install.js, validate.js, catalog.js, export-claude-web.js, sync-upstream.py, sdd/new-feature.js, sdd/feature-paths.js
+kits/          kits installés dans un projet, ex. blockchain-pipeline (19 agents, hooks, gates 1-6, templates 00-10)
+scripts/       install.js, validate.js, catalog.js, export-claude-web.js, blockchain-pipeline.js, kit-selftest.js, sync-upstream.py, sdd/new-feature.js, sdd/feature-paths.js
 docs/          ARCHITECTURE, WORKFLOWS, SOURCES (décisions de fusion), INSTALL, CATALOG (généré)
 ```
 
@@ -120,6 +123,7 @@ Voir [docs/SOURCES.md](docs/SOURCES.md) pour le détail des choix et [docs/CATAL
 ```bash
 node scripts/validate.js      # unicité des noms, frontmatter, chemins du manifest, résidus upstream
 node scripts/catalog.js       # régénère docs/CATALOG.md
+node scripts/kit-selftest.js  # hooks et gates du kit blockchain-pipeline dans un dépôt jetable
 python3 -I scripts/sync-upstream.py --sources <clones> --target .   # resynchroniser depuis les 5 dépôts
 ```
 

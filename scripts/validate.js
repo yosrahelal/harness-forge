@@ -73,6 +73,34 @@ if (fs.existsSync(path.join(ROOT, 'packs'))) {
     for (const p of pack.projects || []) for (const rel of [p.instructions, ...(p.knowledge || [])]) if (!fs.existsSync(path.join(ROOT, rel))) err(`pack ${pack.name}: missing file ${rel}`);
   }
 }
+// kits: agent frontmatter, names unique inside a kit and distinct from core/roster agents, hook/gate scripts parse
+if (fs.existsSync(path.join(ROOT, 'kits'))) {
+  for (const kit of fs.readdirSync(path.join(ROOT, 'kits'))) {
+    const kdir = path.join(ROOT, 'kits', kit);
+    if (!fs.statSync(kdir).isDirectory()) continue;
+    const base = new Map();
+    for (const f of walk(kdir, (p) => /\/claude\/agents\/[^/]+\.md$/.test(p))) {
+      const fm = frontmatter(f), r = path.relative(ROOT, f), variant = r.includes('/variants/');
+      if (!fm || !fm.name || !fm.description) { err(`kit agent without name/description: ${r}`); continue; }
+      if (fm.name !== path.basename(f, '.md')) err(`kit agent name '${fm.name}' != file ${r}`);
+      if (agentNames.has(fm.name)) err(`kit agent '${fm.name}' collides with ${path.relative(ROOT, agentNames.get(fm.name))}`);
+      if (!variant) { if (base.has(fm.name)) err(`duplicate kit agent '${fm.name}' in ${kit}`); base.set(fm.name, f); }
+      else if (!base.has(fm.name) && !fs.existsSync(path.join(kdir, 'claude', 'agents', path.basename(f)))) err(`variant ${r} overrides no base agent`);
+      if (!/origin:/.test(fs.readFileSync(f, 'utf8'))) warn(`kit agent without origin marker: ${r}`);
+    }
+    for (const f of walk(kdir, (p) => p.endsWith('.json'))) { try { JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { err(`invalid JSON ${path.relative(ROOT, f)}: ${e.message}`); } }
+    for (const f of walk(kdir, (p) => p.endsWith('.js'))) {
+      const r = require('child_process').spawnSync(process.execPath, ['--check', f], { encoding: 'utf8' });
+      if (r.status !== 0) err(`syntax error ${path.relative(ROOT, f)}: ${r.stderr.split('\n')[0]}`);
+    }
+    const perim = path.join(kdir, 'claude', 'hooks', 'perimeters.json');
+    if (fs.existsSync(perim)) {
+      const p = JSON.parse(fs.readFileSync(perim, 'utf8'));
+      for (const name of base.keys()) if (!p.agents[name] && !(name.startsWith('auditeur-') && p.agents['auditeur-*'])) err(`kit agent '${name}' has no write perimeter in ${path.relative(ROOT, perim)}`);
+      for (const [k, v] of Object.entries(p.agents)) for (const re of [v.allow, v.deny].filter(Boolean)) { try { new RegExp(re.replace(/\{class\}/g, 'x')); } catch (e) { err(`bad perimeter regex for ${k}: ${e.message}`); } }
+    }
+  }
+}
 // plugin manifest
 const plugin = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8'));
 for (const p of [...plugin.agents, ...plugin.skills, ...plugin.commands, plugin.hooks]) {

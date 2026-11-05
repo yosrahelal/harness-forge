@@ -1,0 +1,11 @@
+# Pipeline gates. Included from Makefile (`include Makefile.pipeline`) or used directly: make -f Makefile.pipeline gate-3
+.PHONY: gate-1 gate-2 gate-3 gate-4 gate-5 gate-6 gates mutation fork snapshot-storage
+gate-1 gate-2 gate-3 gate-4 gate-5 gate-6:
+	@bash scripts/gates/$@.sh
+gates: gate-1 gate-2 gate-3 gate-4
+mutation:
+	@node scripts/gates/mutation.js
+fork:
+	@bash scripts/gates/fork.sh
+snapshot-storage:
+	@node scripts/gates/gates.js snapshot-storage

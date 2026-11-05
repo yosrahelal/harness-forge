@@ -1,0 +1,5 @@
+{
+  "findings": [
+    { "id": "ACC-1", "classes": ["acces"], "location": "contracts/EurToken.sol:88", "severity": "high", "status": "open", "proof_test": "test_proof_ACC_1", "route": "developpeur" }
+  ]
+}

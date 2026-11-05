@@ -60,4 +60,6 @@ Skills live under `skills/<category>/<name>/SKILL.md`; the `agents/openai.yaml` 
 
 ## Project bootstrap
 
+For a regulated smart-contract project, `/forge:blockchain-pipeline <name> --chain evm|soroban` installs the multi-agent pipeline kit (agents, orchestrator CLAUDE.md, hooks, gates, templates) next to or instead of `/forge:init`; without the plugin, run `node scripts/blockchain-pipeline.js --target <project>`.
+
 Inside a project, run `/forge:init` once. It creates `.forge/` (constitution, gitignore), installs stack-matched rules and reviewers at project scope, adds a short Forge section to `CLAUDE.md`, runs the tracker/glossary setup (`forge-setup` skill) and offers `/forge:constraints`.

@@ -72,6 +72,10 @@ For an unstructured "it's broken": `/forge:debug "<symptom>"` (debugging skill) 
 - `rules/` installed per stack keep style, testing, security and git conventions always on.
 - `retro` → `/forge:learn` → `writing-for-agents` turns session lessons into skills; `skill-scout` checks for an existing skill first; `skill-stocktake` audits quality; `rules-distill` extracts cross-cutting rules.
 
+## 9. Regulated blockchain project (pipeline v2)
+
+`/forge:blockchain-pipeline <name> [--chain evm|soroban]` installs the kit in the project; the project `CLAUDE.md` becomes the orchestrator. Steps: analyste → architecte → concepteur (executable spec, gate 1) → developpeur (gate 2) → testeur (gate 3) → red-team rounds + six auditors in parallel + juge (gate 4) → relecteur → documentaliste → external audit → release (gate 5 before signing, gate 6 after a human broadcasts) → run-config / run-triage → upgrade loop. Gates are scripts (`make gate-N`) and fail closed; the user validates every step and the three key moments (architecture, before external audit, before mainnet). Details: `playbooks/blockchain-pipeline.md`.
+
 ## Picking the right depth
 
 | Change size | Minimum ceremony |
@@ -81,3 +85,4 @@ For an unstructured "it's broken": `/forge:debug "<symptom>"` (debugging skill) 
 | fuzzy ask | `/forge:grill-me` first |
 | 1–5 days | specify → tasks → build auto → verify → review → ship |
 | multi-week / multi-role | wayfinder or orchestrate, constitution first |
+| smart contract going to production | `/forge:blockchain-pipeline`, every gate |

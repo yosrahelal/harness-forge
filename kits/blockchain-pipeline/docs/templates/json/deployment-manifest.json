@@ -1,0 +1,12 @@
+{
+  "network": "sepolia",
+  "commit": "<git sha>",
+  "solc": "0.8.28", "optimizer_runs": 200,
+  "deployer": "0x…",
+  "contracts": [
+    { "name": "EurToken", "address": "0x…", "salt": "0x…", "args": [], "runtime_code_hash": "0x…" }
+  ],
+  "roles": [
+    { "contract": "EurToken", "contract_address": "0x…", "role_name": "DEFAULT_ADMIN_ROLE", "role": "0x0000000000000000000000000000000000000000000000000000000000000000", "holder": "0x<timelock>" }
+  ]
+}

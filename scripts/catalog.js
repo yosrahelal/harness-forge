@@ -37,6 +37,15 @@ for (const cat of fs.readdirSync(path.join(ROOT, 'skills')).sort()) {
     md += `| \`${sk}\` | ${inv} | ${originTag(m.origin)} | ${short(m.description)} |\n`;
   }
 }
+if (fs.existsSync(path.join(ROOT, 'kits'))) {
+  md += '\n## Kits (`kits/<name>/`, copied into a project)\n';
+  for (const k of fs.readdirSync(path.join(ROOT, 'kits')).sort()) {
+    const dir = path.join(ROOT, 'kits', k, 'claude', 'agents');
+    if (!fs.existsSync(dir)) continue;
+    md += `\n### ${k}\n\n| Agent | Model | Description |\n|---|---|---|\n`;
+    for (const f of fs.readdirSync(dir).filter((f) => f.endsWith('.md')).sort()) { const m = fm(path.join(dir, f)); md += `| \`${m.name}\` | ${m.model || 'inherit'} | ${short(m.description)} |\n`; }
+  }
+}
 md += '\n## Rules (`rules/`)\n\n' + fs.readdirSync(path.join(ROOT, 'rules')).filter((d) => fs.statSync(path.join(ROOT, 'rules', d)).isDirectory()).sort().map((d) => `- \`${d}\`: ` + fs.readdirSync(path.join(ROOT, 'rules', d)).map((f) => f.replace('.md', '')).join(', ')).join('\n') + '\n';
 fs.mkdirSync(path.join(ROOT, 'docs'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'docs', 'CATALOG.md'), md);

@@ -1,0 +1,6 @@
+{
+  "rounds": [
+    { "n": 1, "date": "2026-11-05", "commit": "abc1234", "content_hash": "<gates.js hash contracts src>", "attempts": 7, "exploits_succeeded": 0, "critical": 0, "high": 0 }
+  ],
+  "consecutive_clean_rounds": 1
+}

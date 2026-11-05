@@ -1,0 +1,10 @@
+{
+  "chain": "evm",
+  "network": "sepolia",
+  "fork_rpc_url": "http://127.0.0.1:8545",
+  "explorer_api": "https://eth-sepolia.blockscout.com/api",
+  "monitor_health_url": "http://127.0.0.1:3000/health",
+  "thresholds": { "branch_coverage": 95, "mutation_score": 80, "redteam_clean_rounds": 3 },
+  "commands": {},
+  "waivers": {}
+}

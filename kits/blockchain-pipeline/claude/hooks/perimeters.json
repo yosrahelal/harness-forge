@@ -1,0 +1,82 @@
+{
+  "_doc": "Write perimeter per pipeline agent. Paths are relative to the project root. A path is allowed when it matches 'allow' and does not match 'deny'. {class} is replaced by the auditor class (auditeur-acces -> acces). Read by .claude/hooks/guard-paths.js and scripts/gates/gates.js. Changing a perimeter is a decision: log it in docs/00-projet.md.",
+  "always": "^\\.pipeline/current-agent$",
+  "agents": {
+    "orchestrateur": {
+      "allow": "^(docs/00-projet\\.md|\\.pipeline/(current-agent|config\\.json))$"
+    },
+    "analyste": {
+      "allow": "^docs/01-"
+    },
+    "architecte": {
+      "allow": "^docs/02-"
+    },
+    "concepteur": {
+      "allow": "^(contracts/interfaces/|test/(src/)?(invariants|symbolic)/|test/(Cargo\\.toml|src/lib\\.rs)$|docs/03-|\\.pipeline/spec\\.json$)"
+    },
+    "developpeur": {
+      "allow": "^(contracts/|src/|infra/|test/(src/)?base/|docs/04-|foundry\\.toml$|remappings\\.txt$|Cargo\\.(toml|lock)$)",
+      "deny": "^contracts/interfaces/"
+    },
+    "testeur": {
+      "allow": "^(test/|docs/05-|\\.pipeline/tests\\.json$)",
+      "deny": "^test/(src/)?(invariants|symbolic|exploits|audit|base|upgrade)/|^test/(Cargo\\.toml|src/lib\\.rs)$"
+    },
+    "red-team": {
+      "allow": "^(test/(src/)?exploits/|docs/06a-|\\.pipeline/redteam\\.json$)"
+    },
+    "auditeur-*": {
+      "allow": "^(docs/audit/{class}\\.md$|test/(src/)?audit/{class}/)"
+    },
+    "auditeurs": {
+      "allow": "^(docs/audit/[a-z0-9-]+\\.md$|test/(src/)?audit/)"
+    },
+    "juge": {
+      "allow": "^(docs/06b-|\\.pipeline/audit\\.json$)"
+    },
+    "relecteur": {
+      "allow": "^docs/06-revue"
+    },
+    "documentaliste": {
+      "allow": "^docs/07-livrable/"
+    },
+    "release": {
+      "allow": "^(script/|deployments/|docs/08-|\\.pipeline/release\\.json$)",
+      "deny": "^deployments/proposals/"
+    },
+    "run-config": {
+      "allow": "^(monitor/|docs/09-|\\.pipeline/ops\\.json$)",
+      "deny": "^monitor/incidents/"
+    },
+    "run-triage": {
+      "allow": "^(docs/09-|monitor/incidents/)"
+    },
+    "upgrade": {
+      "allow": "^(docs/10-|test/(src/)?upgrade/|deployments/proposals/|\\.pipeline/upgrade\\.json$)"
+    }
+  },
+  "gates": {
+    "1": [
+      "concepteur"
+    ],
+    "2": [
+      "developpeur"
+    ],
+    "3": [
+      "testeur"
+    ],
+    "4": [
+      "red-team",
+      "auditeur-*",
+      "juge"
+    ],
+    "5": [
+      "release",
+      "upgrade"
+    ],
+    "6": [
+      "release",
+      "run-config"
+    ]
+  }
+}

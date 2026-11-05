@@ -1,0 +1,4 @@
+{
+  "external_audit": { "reference": "<cabinet, date>", "report_path": "docs/audit-externe/rapport.pdf", "open_critical": 0, "open_high": 0 },
+  "simulation": { "tool": "tenderly", "id": "<simulation id>", "status": "passed", "content_hash": "<gates.js hash contracts src script>" }
+}

@@ -63,6 +63,10 @@ State lives in the project: `specs/`, `.forge/{constitution.md, feature.json, bu
 | PostToolUse * | suggest-compact.js | strategic compaction reminder |
 | PreCompact | pre-compact.js | state snapshot to `.forge/sessions/` |
 
+## Kits
+
+A kit is a set of project files the plugin cannot provide as plugin components because they must live in the project: project `CLAUDE.md`, `.claude/agents/` that hooks identify by name, project hooks, scripts and templates. `kits/blockchain-pipeline/` is installed by `/forge:blockchain-pipeline` (`scripts/blockchain-pipeline.js`): 19 pipeline agents, an orchestrator `CLAUDE.md`, three hooks (write perimeter per agent, no signing/secret/remote RPC, JSONL journal), deterministic gates `scripts/gates/gate-1..6.sh`, templates 00–10. Kit agents are validated by `validate.js` (frontmatter, unique names, a write perimeter each) and exercised by `scripts/kit-selftest.js`. Method: `playbooks/blockchain-pipeline.md`.
+
 ## Extending
 
 - New skill: `skills/<category>/<name>/SKILL.md` (+ `references/`), name == directory, trigger-rich description. Run `validate.js`, `catalog.js`.
