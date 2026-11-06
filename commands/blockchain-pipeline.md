@@ -22,7 +22,7 @@ Method and rationale: `${CLAUDE_PLUGIN_ROOT}/playbooks/blockchain-pipeline.md`. 
    echo '{"tool_input":{"file_path":"contracts/X.sol"},"agent_type":"testeur"}' | node .claude/hooks/guard-paths.js
    ```
    If a hook does not block, stop and report: the pipeline must not run unguarded.
-4. **Toolchain.** Report which of `forge`, `anvil`, `halmos`, `slither`, `gambit` (EVM) or `stellar`, `cargo llvm-cov`, `cargo mutants` (Soroban) are missing. Gates fail closed on a missing tool; do not install anything without asking.
+4. **Toolchain.** Report which of `forge`, `anvil`, `halmos`, `slither`, `gambit` (EVM) or `stellar`, `komet`, `cargo scout-audit`, `cargo llvm-cov`, `cargo mutants` (Soroban; also suggest the official `stellar-dev-skill` and OpenZeppelin `setup-stellar-contracts` skills) are missing. Gates fail closed on a missing tool; do not install anything without asking.
 5. **Hand over.** Tell the user: fill in `docs/00-projet.md` (brief, scope, constraints), restart Claude Code so the new agents and hooks load, then ask the orchestrator to start step 1 (`analyste`). Gates 5–6 that need a remote RPC are run by the user in their own terminal (`make gate-6`).
 
 Never put a private key, mnemonic or RPC URL in any file or command. Never change thresholds, perimeters or waivers without a written decision in `docs/00-projet.md`.

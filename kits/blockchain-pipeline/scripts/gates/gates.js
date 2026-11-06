@@ -48,9 +48,10 @@ const COMMANDS = {
     fmt: 'cargo fmt --all -- --check',
     tests: 'cargo test --workspace -- --skip exploits:: --skip audit:: --skip fork:: --skip upgrade::',
     coverage: 'cargo llvm-cov --workspace --branch --lcov --output-path lcov.info -- --skip exploits:: --skip audit:: --skip fork:: --skip upgrade::',
-    symbolic: 'cargo test --workspace symbolic::',
+    symbolic: 'cd test/symbolic && komet test && komet prove run', // Komet (Runtime Verification): fuzzing then symbolic proof
     fork: null,
-    static: 'cargo clippy --workspace --all-targets -- -D warnings',
+    static: 'cargo clippy --workspace --all-targets -- -D warnings && cargo scout-audit', // Scout (CoinFabrik): exit code to check on the installed version
+    formal: null, // Certora Sunbeam: runs on the Certora cloud (code leaves the bank) — set the command once the legal/security review allows it, or waive gate-4.formal
     exploits: 'cargo test --workspace exploits::',
     proofs: 'cargo test --workspace audit::',
     dry_run: null, // e.g. "stellar contract deploy --network local --source alice --wasm target/wasm32v1-none/release/eurxt.wasm"
@@ -60,9 +61,11 @@ const COMMANDS = {
     keccak: null,
     has_role: null,
     storage_check: null, // command that exits 0 when the new DataKey/storage schema is compatible with the deployed one
+    fetch_wasm: 'stellar contract fetch --id {address} --rpc-url "$VERIFY_RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --out-file {out}', // flags to check on the installed stellar-cli
+    wasm_build: 'stellar contract build',
   },
 };
-const CRITICAL = 'mint|burn|transfer|transferFrom|forcedTransfer|redeem|withdraw|upgradeTo|upgradeToAndCall|setAdmin|grantRole|freeze|pause|clawback';
+const CRITICAL = 'mint|burn|transfer|transferFrom|transfer_from|forcedTransfer|forced_transfer|redeem|withdraw|upgradeTo|upgradeToAndCall|upgrade|setAdmin|set_admin|grantRole|grant_role|freeze|pause|clawback|set_authorized';
 
 const cfg = Object.assign({ chain: 'evm', network: 'local', thresholds: {}, commands: {}, waivers: {} }, tryJson('.pipeline/config.json') || {});
 const CHAIN = cfg.chain === 'soroban' ? 'soroban' : 'evm';
@@ -261,7 +264,8 @@ const GATES = {
   } },
   4: { title: 'Sécurité (avant revue)', checks: {
     artefacts: () => { const a = hasSection('docs/06a-redteam.md', 'Manches consécutives sans exploit'); return a.status !== 'PASS' ? a : exists('docs/06b-audit.md') ? pass('06a et 06b présents') : fail('docs/06b-audit.md absent'); },
-    static: () => runCmd('static', `${CMD.static || 'analyse statique'} : aucun constat High`),
+    static: () => runCmd('static', `${CMD.static || 'analyse statique'} : aucun constat High/critique`),
+    formal: () => (CHAIN !== 'soroban' ? na('EVM : propriétés Halmos contrôlées en gate 3') : CMD.formal ? runCmd('formal', 'règles Sunbeam critiques vertes') : fail('commands.formal (Certora Sunbeam) non défini : le renseigner ou déroger (gate-4.formal) avec motif')),
     exploits: () => {
       const r = suite('exploits', { allowFailures: true }); if (r.error) return fail(r.error);
       const open = r.tests.filter((t) => /^test_?exploit/i.test(t.name) && t.status === 'pass');
@@ -326,6 +330,7 @@ const GATES = {
     manifest: () => { const m = tryJson(`deployments/${cfg.network}.json`); return m && Array.isArray(m.contracts) && m.contracts.length ? pass(`${m.contracts.length} contrat(s) dans deployments/${cfg.network}.json`) : fail(`deployments/${cfg.network}.json absent ou sans contracts[]`); },
     bytecode: () => {
       const m = tryJson(`deployments/${cfg.network}.json`); if (!m) return fail('manifeste absent');
+      if (CHAIN === 'soroban') return wasmHashes(m);
       if (!CMD.code || !CMD.keccak) return fail('commands.code / commands.keccak non définis');
       if (!process.env.VERIFY_RPC_URL && /VERIFY_RPC_URL/.test(CMD.code)) return fail('VERIFY_RPC_URL non défini (RPC en lecture, fourni par un humain)');
       const bad = [];
@@ -337,8 +342,9 @@ const GATES = {
       }
       return bad.length ? fail(bad.join(' ; ')) : pass(`${m.contracts.length} bytecode(s) = manifeste`);
     },
-    'admin-not-eoa': () => {
+    'admin-not-eoa': async () => {
       const m = tryJson(`deployments/${cfg.network}.json`); if (!m || !Array.isArray(m.roles)) return fail('manifeste sans roles[]');
+      if (CHAIN === 'soroban') return stellarMultisig(m);
       if (!CMD.code || !CMD.has_role) return fail('commands.code / commands.has_role non définis');
       const bad = [];
       for (const r of m.roles) {
@@ -352,6 +358,7 @@ const GATES = {
     },
     'sources-verified': async () => {
       const m = tryJson(`deployments/${cfg.network}.json`); if (!m) return fail('manifeste absent');
+      if (CHAIN === 'soroban') return reproducibleBuild(m);
       if (!cfg.explorer_api) return fail('config.explorer_api non défini (API Blockscout/Etherscan)');
       const bad = [];
       for (const c of m.contracts) {
@@ -369,6 +376,45 @@ const GATES = {
     },
   } },
 };
+
+// ---------------------------------------------------------------- Soroban gate 6
+const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+function wasmHashes(m) {
+  if (!CMD.fetch_wasm) return fail('commands.fetch_wasm non défini');
+  if (/VERIFY_RPC_URL/.test(CMD.fetch_wasm) && !process.env.VERIFY_RPC_URL) return fail('VERIFY_RPC_URL et NETWORK_PASSPHRASE non définis (RPC en lecture, fournis par un humain)');
+  const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'wasm-'));
+  const bad = [];
+  for (const c of m.contracts) {
+    const out = path.join(dir, `${c.name}.wasm`);
+    const r = sh(fill(CMD.fetch_wasm, { address: c.address, out }));
+    if (r.code !== 0 || !fs.existsSync(out)) { bad.push(`${c.name}: WASM non récupéré (${tail(r.out, 2)})`); continue; }
+    if (!c.wasm_hash || sha256(out) !== c.wasm_hash.toLowerCase()) bad.push(`${c.name}: hash du WASM déployé ${sha256(out).slice(0, 12)}… ≠ manifeste`);
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+  return bad.length ? fail(bad.join(' ; ')) : pass(`${m.contracts.length} WASM déployé(s) = manifeste`);
+}
+function reproducibleBuild(m) {
+  const r = runCmd('wasm_build'); if (r.status !== 'PASS') return r;
+  const bad = m.contracts.filter((c) => !c.wasm_path || !exists(c.wasm_path) || sha256(P(c.wasm_path)) !== String(c.wasm_hash || '').toLowerCase()).map((c) => c.name);
+  return bad.length ? fail(`build local ≠ WASM du manifeste (build non reproductible ou code différent) : ${bad.join(', ')}`) : pass('WASM reconstruit depuis les sources = manifeste');
+}
+async function stellarMultisig(m) {
+  const horizon = process.env.HORIZON_URL || cfg.horizon_url; if (!horizon) return fail('HORIZON_URL non défini (Horizon en lecture)');
+  const bad = [];
+  for (const r of m.roles) {
+    if (/^C/.test(r.holder)) { bad.push(`${r.role_name || r.role} détenu par un contrat ${r.holder} : multisig à vérifier hors gate ou dérogation`); continue; }
+    if (m.deployer && r.holder === m.deployer) { bad.push(`${r.role_name || r.role} encore détenu par le déployeur`); continue; }
+    try {
+      const a = await (await fetch(`${horizon.replace(/\/$/, '')}/accounts/${r.holder}`)).json();
+      const signers = (a.signers || []).filter((s) => s.weight > 0);
+      const maxW = Math.max(0, ...signers.map((s) => s.weight));
+      const t = a.thresholds || {};
+      if (signers.length < 2) bad.push(`${r.holder}: ${signers.length} signataire(s)`);
+      else if (!(t.med_threshold > maxW && t.high_threshold > maxW)) bad.push(`${r.holder}: un signataire seul atteint le seuil (poids max ${maxW}, med ${t.med_threshold}, high ${t.high_threshold})`);
+    } catch (e) { bad.push(`${r.holder}: ${e.message}`); }
+  }
+  return bad.length ? fail(bad.slice(0, 6).join(' ; ')) : pass(`${m.roles.length} rôle(s) admin sur des comptes multisig à seuils`);
+}
 
 function compareLayouts(c, base, now) {
   const out = [];

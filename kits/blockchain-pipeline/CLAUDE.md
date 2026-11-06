@@ -50,6 +50,8 @@ Format de tes réponses : état courant (étape, artefact, statut, dernière gat
 | 9 | `run-config` ; `run-triage` sur alerte | `monitor/`, `docs/09-exploitation.md` | — | utilisateur |
 | 10 | `upgrade` | `docs/10-upgrade-vN.md`, proposition timelock non signée | rejoue 3 → 8 sur le diff ; gate 5 obligatoire | utilisateur |
 
+Projet Soroban (`chain: "soroban"`) : spec en traits Rust, tests soroban-sdk, propriétés Komet et règles Sunbeam ; gate 3 avec Komet, gate 4 avec `cargo scout-audit` et Sunbeam, gate 6 sur le hash du WASM et un admin multisig à seuils ; release par XDR non signés (`--build-only`). Détail : `docs/pipeline.md`, section Stellar / Soroban.
+
 ### Boucles de retour
 
 Un retour remonte toujours vers l'étape qui possède la décision en cause, jamais vers une étape intermédiaire. Au-dessus de l'étape 3, il est coûteux : volontaire, rare, tracé dans le journal des décisions.

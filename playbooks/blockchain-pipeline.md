@@ -154,21 +154,62 @@ Règles d'installation en contexte bancaire :
 - Tester chaque outil dans le POC isolé hors SI avant toute intégration.
 - Defender n'existe plus depuis le 1er juillet 2026 et son module Deploy n'a pas de remplaçant open source : l'agent `release` et le script Foundry en tiennent lieu. OpenZeppelin Monitor (AGPL v3) : à valider avec le juridique avant usage dans le SI.
 
+## Stellar / Soroban
+
+La pipeline reste la même, l'outillage change. Il n'existe pas de MCP Stellar officiel, et Trail of Bits ne couvre pas Soroban : Scout, Sunbeam et Komet prennent le relais pour la sécurité. Installation : `/forge:blockchain-pipeline <projet> --chain soroban` remplace les 15 agents techniques par leur variante Soroban (concepteur, developpeur, testeur, red-team, six auditeurs, juge, release, run-config, run-triage, upgrade) ; analyste, architecte, relecteur et documentaliste sont communs.
+
+| Agent | Outil | Type | Éditeur | Apport |
+| --- | --- | --- | --- | --- |
+| Concepteur, Développeur | stellar-dev-skill | Skills | Dépôt `stellar`, officiel | Contrats soroban-sdk, dapp, assets, sécurité ; `/plugin marketplace add stellar/stellar-dev-skill` |
+| Concepteur, Développeur | OpenZeppelin Stellar Contracts | Librairie Rust | OpenZeppelin, auditée, MIT | Fongible SEP-41, NFT, security token, RWA, vault : la base d'EURxt |
+| Concepteur, Développeur | OpenZeppelin Stellar Contracts MCP | MCP | OpenZeppelin, officiel | Tokens fongibles, NFT, stablecoins ; hébergé ou local |
+| Concepteur | RWA Wizard | Générateur | OpenZeppelin, AGPL v3 | Projets de token RWA avec modules de conformité, générateur Stellar |
+| Développeur | OpenZeppelin `setup-stellar-contracts` | Skill | OpenZeppelin | Mise en place de l'environnement Soroban |
+| Développeur, Testeur, Red team | Stellar CLI | CLI | SDF, officiel | Build, tests, déploiement ; à préférer aux MCP communautaires |
+| Testeur, Red team | Komet | Fuzzing et preuve | Runtime Verification | Propriétés en Rust, en fuzzing (`komet test`) ou en preuve symbolique (`komet prove run`) ; local |
+| Auditeurs | Scout | Analyse statique | CoinFabrik, MIT | `cargo scout-audit`, VS Code, GitHub Action |
+| Concepteur, Auditeurs | Certora Sunbeam | Vérification formelle | Certora | Preuves au niveau du WASM, specs en Rust ; le job tourne sur le cloud Certora |
+| Release | OpenZeppelin Relayer | Auto-hébergé | OpenZeppelin | Invocation, déploiement, upload WASM, fee bump ; support Stellar encore en développement |
+| Run | OpenZeppelin Monitor | Auto-hébergé | OpenZeppelin | Version Stellar, en alpha |
+
+À écarter ou manier avec précaution :
+- MCP communautaires (soroban-mcp-server, pulsar, stellar-mcp) : testnet uniquement ; pulsar attend une `STELLAR_SECRET_KEY` dans sa configuration.
+- Trail of Bits building-secure-contracts : pas de scanner Soroban ; seuls ses skills génériques (revue différentielle) servent.
+- Soroban SDK : CVE-2026-32322 pouvait permettre des doubles retraits ; le concepteur fige une version corrigée (vérifier l'avis de sécurité).
+- Certora Sunbeam envoie le code sur le cloud Certora : validation sécurité avant usage sur du code confidentiel ; sinon dérogation `gate-4.formal` motivée.
+
+Adaptations de la pipeline (appliquées par la variante et par `chain: "soroban"` dans `.pipeline/config.json`) :
+
+| Étape | EVM | Soroban |
+| --- | --- | --- |
+| Spec exécutable | Interfaces `.sol`, invariants Foundry, propriétés Halmos | Traits Rust (`contracts/interfaces/`), tests soroban-sdk (`test/src/invariants/`), propriétés Komet (`test/symbolic/`, `test_*`), règles Sunbeam (`test/symbolic/sunbeam/`) |
+| Tests | `forge test`, fuzz, mutation testing | `cargo test`, `komet test` (fuzzing), `komet prove run` (preuve), `cargo llvm-cov`, `cargo mutants` |
+| Red team | Exploits Foundry sur fork Anvil | Exploits en tests Rust (`test/src/exploits/`), sur réseau local ; testnet si `"stellar_testnet": true` |
+| Classes d'audit | Accès, appels, calcul, upgrade, économie, conformité | Autorisations (`require_auth`), appels inter-contrats, arithmétique `i128` et décimales, upgrade du WASM, TTL et archivage du storage, conformité (clawback, flags d'autorisation, SAC). Fichiers : `auditeur-acces`, `-appels`, `-calcul`, `-upgrade`, `-economie` (TTL), `-conformite` |
+| Gate 3 | Halmos | `komet test && komet prove run` |
+| Gate 4 | `slither --fail-high` | `cargo clippy -D warnings && cargo scout-audit` sans constat critique ; règles Sunbeam critiques vertes (`commands.formal`) |
+| Gate 5 | Storage layout (`forge inspect`) | Compatibilité du schéma `DataKey` (`commands.storage_check`) ; répétition sur réseau local (`commands.dry_run`) |
+| Gate 6 | Bytecode = manifeste, aucun EOA admin | Hash (sha256) du WASM déployé = manifeste, WASM reconstruit depuis les sources = manifeste, admin sur un compte multisig à seuils (Horizon : ≥ 2 signataires, aucun signataire seul n'atteint les seuils moyen et haut) |
+| Release | Batch Safe non signé | Commandes `--build-only` : XDR non signés (upload, déploiement, passation de l'admin), signés par les signataires du multisig |
+
+Garde-fou Bash (`guard-chain.js`) : bloque `--network mainnet|public|pubnet`, `STELLAR_SECRET_KEY` et variables de compte, toute clé secrète Stellar (`S` suivi de 55 caractères base32), `stellar keys show|secret|add|use`, toute transaction Stellar hors `--network local`. Avec `"stellar_testnet": true` (décision écrite), testnet et futurenet sont permis ainsi que leurs hôtes RPC, Horizon et friendbot ; mainnet reste bloqué.
+
+Commandes à vérifier sur les versions installées : sortie et code de retour de `cargo scout-audit`, organisation d'une crate Komet, options de `stellar contract fetch` (gate 6), commande Sunbeam.
+
 ## Premier projet : EURxt sur Stellar
 
-Seule sur le projet, périmètre borné (un contrat à développer et tester), toute la chaîne exercée y compris les boucles de retour.
+Seule sur le projet, périmètre borné (un contrat à développer et tester), toute la chaîne exercée y compris les boucles de retour. Base : OpenZeppelin Stellar Contracts (fongible SEP-41 ou security token selon l'analyse).
 
 ```text
 /forge:blockchain-pipeline EURxt --chain soroban
 ```
 
-- [ ] Kit installé (19 agents, variante Soroban pour concepteur, developpeur, testeur ; templates 00 à 10 ; gates)
+- [ ] Kit installé (19 agents, dont 15 en variante Soroban ; templates 00 à 10 ; gates)
+- [ ] `stellar-dev-skill` et `setup-stellar-contracts` installés ; Stellar CLI, Komet, Scout, cargo-llvm-cov, cargo-mutants en local
 - [ ] `docs/00-projet.md` rédigé pour EURxt
-- [ ] `.pipeline/config.json` : commandes Soroban sans défaut (`dry_run`, `storage_check`, gate 6) renseignées ou dérogées avec motif
+- [ ] `.pipeline/config.json` : `dry_run`, `storage_check`, `formal` renseignés ou dérogés avec motif ; `stellar_testnet` décidé
 - [ ] Analyste lancé, `01-analyse.md` validé
 - [ ] Prompts ajustés après la première boucle complète ; seuils revus et consignés
-
-En Soroban, il n'y a ni Slither ni Halmos : la gate 4 utilise `cargo clippy -D warnings` (ajouter Scout de CoinFabrik via `commands.static` si installé) et les propriétés `check_*` sont des tests proptest.
 
 ## Sources
 
@@ -176,5 +217,6 @@ En Soroban, il n'y a ni Slither ni Halmos : la gate 4 utilise `cargo clippy -D w
 - Forum OpenZeppelin — pas de remplaçant pour Deploy.
 - Trail of Bits Skills : building-secure-contracts, entry-point-analyzer.
 - OpenZeppelin Contracts MCP. Tenderly MCP Server.
+- Stellar : stellar-dev-skill, OpenZeppelin Stellar Contracts et MCP, RWA Wizard, Komet (Runtime Verification), Scout (CoinFabrik), Certora Sunbeam, avis CVE-2026-32322 du Soroban SDK.
 - Anthropic — SCONE-bench : capacité des modèles à exploiter des smart contracts, base de l'agent red team.
 - Claude Code — documentation des hooks (codes de sortie, entrée JSON) et des sous-agents.

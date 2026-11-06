@@ -40,4 +40,4 @@ Check the status of drafts (EIPs, SEPs) and of products before recommending them
 ## Tooling
 
 - EVM: Foundry (tests, fuzz, invariants), Hardhat, OpenZeppelin Contracts and Upgrades, Slither, Aderyn, Echidna / Medusa, Halmos, Certora.
-- Stellar: Stellar CLI, `soroban-sdk`, Stellar Lab. Solana: Anchor, `solana-test-validator`.
+- Stellar: Stellar CLI, `soroban-sdk` (pin a version fixed for CVE-2026-32322), Stellar Lab; OpenZeppelin Stellar Contracts (audited, MIT: SEP-41 fungible, NFT, security token, RWA, vault) and its MCP; OpenZeppelin RWA Wizard (AGPL v3, RWA projects with compliance modules); official `stellar-dev-skill`; security: Scout (CoinFabrik), Komet (Runtime Verification), Certora Sunbeam. No official Stellar MCP; community ones are testnet-only. Solana: Anchor, `solana-test-validator`.

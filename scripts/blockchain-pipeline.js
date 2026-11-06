@@ -112,13 +112,16 @@ else appendLines(mk, ['include Makefile.pipeline']);
 // 4. pipeline state
 const config = JSON.parse(fs.readFileSync(path.join(KIT, 'docs', 'templates', 'json', 'config.json'), 'utf8'));
 Object.assign(config, { chain: CHAIN, network: NETWORK });
-if (CHAIN === 'soroban') { delete config.explorer_api; config.waivers = {}; }
+if (CHAIN === 'soroban') {
+  delete config.explorer_api;
+  Object.assign(config, { stellar_testnet: false, horizon_url: 'https://horizon-testnet.stellar.org', waivers: {} });
+}
 write(path.join(TARGET, '.pipeline', 'config.json'), JSON.stringify(config, null, 2) + '\n');
 write(path.join(TARGET, '.pipeline', 'current-agent'), 'orchestrateur\n');
 
 // 5. working directories
 const t = CHAIN === 'soroban' ? 'test/src' : 'test';
-for (const d of ['contracts/interfaces', `${t}/base`, `${t}/invariants`, `${t}/symbolic`, `${t}/fork`, `${t}/exploits`, `${t}/audit`, `${t}/upgrade`,
+for (const d of ['contracts/interfaces', `${t}/base`, `${t}/invariants`, 'test/symbolic', ...(CHAIN === 'soroban' ? ['test/src/suite'] : []), `${t}/fork`, `${t}/exploits`, `${t}/audit`, `${t}/upgrade`,
   'script', 'deployments/proposals', 'monitor/incidents', 'docs/audit', 'docs/audit-externe', 'docs/07-livrable']) {
   const keep = path.join(TARGET, d, '.gitkeep');
   if (!fs.existsSync(path.join(TARGET, d))) { report.created.push(d + '/'); if (!DRY) { fs.mkdirSync(path.dirname(keep), { recursive: true }); fs.writeFileSync(keep, ''); } }
@@ -133,5 +136,5 @@ console.log(`
 Suite :
   1. Compléter docs/00-projet.md (brief, périmètre, contraintes) et le valider.
   2. Vérifier la version de Claude Code : les hooks lisent tool_input.file_path, tool_input.command et agent_type.
-  3. ${CHAIN === 'soroban' ? 'Renseigner dans .pipeline/config.json les commandes Soroban sans défaut (dry_run, storage_check, gate 6) ou une dérogation motivée.' : 'Installer forge, halmos, slither, gambit ; écrire gambit.json avant la gate 3.'}
+  3. ${CHAIN === 'soroban' ? 'Installer stellar-cli, komet, cargo-scout-audit, cargo-llvm-cov, cargo-mutants ; renseigner dans .pipeline/config.json dry_run, storage_check et formal (Sunbeam) ou une dérogation motivée ; stellar_testnet reste à false sauf décision écrite.' : 'Installer forge, halmos, slither, gambit ; écrire gambit.json avant la gate 3.'}
   4. Lancer l'orchestrateur : « Démarre l'étape 1 (analyste) ».`);

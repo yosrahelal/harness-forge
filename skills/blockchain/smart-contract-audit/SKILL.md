@@ -18,7 +18,7 @@ Write down before reading code:
 
 ## Step 2 — Automated pass (if the sandbox allows)
 
-Run tools locally; never send confidential code to a hosted MCP or third-party API. Slither MCP: `--disable-metrics`. Complementary analysers: Aderyn, Trail of Bits `entry-point-analyzer`; Soroban: `cargo clippy -D warnings`, Scout (CoinFabrik).
+Run tools locally; never send confidential code to a hosted MCP or third-party API. Slither MCP: `--disable-metrics`. Complementary analysers: Aderyn, Trail of Bits `entry-point-analyzer`; Soroban: Trail of Bits has no Soroban scanner (only its generic skills, such as differential review, apply); use `cargo clippy -D warnings`, Scout (CoinFabrik, `cargo scout-audit`), Komet properties (fuzzing and `komet prove run`), Certora Sunbeam rules if the code may leave the bank (runs on the Certora cloud). Soroban audit classes: authorisations (`require_auth`), cross-contract calls, `i128` arithmetic and decimals, WASM upgrade, storage TTL and archival, compliance (clawback, authorisation flags, SAC).
 
 ```bash
 pip install slither-analyzer solc-select && solc-select install <version> && solc-select use <version>

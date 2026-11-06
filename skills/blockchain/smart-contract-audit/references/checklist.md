@@ -70,6 +70,11 @@ Tick what applies; every "no" or "unclear" becomes a finding or an open question
 - `overflow-checks = true` in the release profile; checked arithmetic on `i128` amounts.
 - Errors returned with `contracterror` rather than bare panics where callers must handle them.
 - Upgrade via `update_current_contract_wasm` guarded by admin; admin rotation two-step.
+- Soroban SDK version fixed for CVE-2026-32322 (double-withdrawal risk; check the advisory); OpenZeppelin Stellar Contracts used for standard parts rather than re-implemented.
+- No authorisation replay: signed payloads carry a nonce or expiry; `require_auth_for_args` covers every argument that matters.
+- Cross-contract calls: callee identity checked (no caller-supplied contract treated as trusted), errors of nested calls handled, no state left inconsistent if a callee fails.
+- TTL and archival: critical persistent data never left to expire (extension on every write path or by an operated job); behaviour after restoration tested; storage growth bounded (resource budget).
+- Admin of the contract and of the SAC (`set_admin`) is a threshold multisig account; no single signer reaches the medium or high threshold.
 - Stellar Asset Contract (SAC) use: issuer flags (`AUTH_REQUIRED`, `AUTH_REVOCABLE`, `AUTH_CLAWBACK_ENABLED`) consistent with the compliance design; SEP-41 interface conformance for custom tokens.
 
 ## Solana / Anchor

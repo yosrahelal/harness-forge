@@ -12,7 +12,7 @@
     "blockchain-deck",
     {
       "name": "smart-contract-testing",
-      "description": "Writes and runs smart-contract tests from the spec: invariants, Halmos/proptest properties, fuzz, fork tests, coverage, mutation score. Use to specify or test contracts.",
+      "description": "Writes and runs smart-contract tests from the spec: invariants, Halmos or Komet properties, fuzz, fork tests, coverage, mutation score. Use to specify or test contracts.",
       "note": "The sandbox may lack forge, halmos or gambit: write the tests and the exact commands, and say which measurements could not be run."
     },
     {

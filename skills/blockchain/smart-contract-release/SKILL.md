@@ -1,6 +1,6 @@
 ---
 name: smart-contract-release
-description: Prepares smart-contract deployment, monitoring and upgrades without ever holding a key — Foundry deploy script dry-run on a local fork, manifest, unsigned Safe batch, role handover to Safe/timelock, post-deploy verification, OpenZeppelin Monitor rules and runbooks, incident triage, storage-layout-checked timelock upgrades. Use when deploying, operating or upgrading contracts.
+description: Prepares smart-contract deployment, monitoring and upgrades without ever holding a key — Foundry deploy script dry-run on a local fork, manifest, unsigned Safe batch, role handover to Safe/timelock, post-deploy verification, OpenZeppelin Monitor rules and runbooks, incident triage, storage-layout-checked timelock upgrades; Stellar variant with unsigned XDR and threshold multisig. Use when deploying, operating or upgrading contracts.
 metadata:
   origin: forge (pipeline multi-agents blockchain v2, Y. Helal 2026-11-05)
 ---
@@ -50,4 +50,12 @@ Fetch the transaction and traces, **replay** it on a local fork or in Tenderly, 
 - Unsigned timelock proposal (`upgradeToAndCall`, encoded data, delay), rehearsed on a fork: state before, upgrade through the timelock, state after, invariants green.
 - Never upgrade outside the timelock or modify a deployed design without a new version.
 
-Soroban: `update_current_contract_wasm` behind the governance account; `DataKey` schema compatible across versions; deploy with `stellar contract deploy --network local` for rehearsal only; production transactions signed by humans.
+## Stellar / Soroban
+
+- **Build** reproducibly (`stellar contract build`, pinned toolchain and soroban-sdk fixed for CVE-2026-32322); record each WASM's path and sha256 in the manifest.
+- **Rehearse** the whole sequence on the local network (`--network local`): upload, deploy, initialise, admin handover, nominal call.
+- **Unsigned transactions**: every production step as a `--build-only` command producing XDR (upload WASM, deploy, initialise, hand the admin to a threshold multisig account, remove every right of the deployer account); signers sign (Stellar Lab, HSM, relayer) and a human submits. OpenZeppelin Relayer handles invocation, deployment, WASM upload and fee bump, but its Stellar support is still in development.
+- **Verify**: sha256 of the deployed WASM (`stellar contract fetch`) = manifest; WASM rebuilt from sources = manifest; admin account multisig with thresholds (Horizon: at least two signers, no single signer reaching the medium and high thresholds).
+- **Monitor**: OpenZeppelin Monitor has a Stellar version in alpha (AGPL v3): plan a fallback (own indexer, KeeperHub). Add rules for `set_options` on the admin account (signers, weights, thresholds), SAC `set_admin`, clawback and `set_authorized`, and data close to TTL expiry.
+- **Upgrade**: `update_current_contract_wasm` behind the multisig admin; `DataKey` variants, stored types and storage types unchanged; TTL of existing data checked after migration; rehearse in a test before building the unsigned XDR.
+- Never use a community Stellar MCP (testnet-only; pulsar expects `STELLAR_SECRET_KEY`); never `--network mainnet|public` from an agent.

@@ -1,6 +1,6 @@
 ---
 name: smart-contract-testing
-description: Writes and runs a smart-contract test suite from the spec, not from the code — executable spec (interfaces, Foundry invariants, Halmos properties), unit, fuzz, integration, fork tests, coverage and mutation score — for Solidity/Foundry or Soroban/Rust. Use when specifying or testing contracts before audit or deployment.
+description: Writes and runs a smart-contract test suite from the spec, not from the code — executable spec (interfaces, Foundry invariants, Halmos or Komet properties), unit, fuzz, integration, fork tests, coverage and mutation score — for Solidity/Foundry or Soroban/Rust. Use when specifying or testing contracts before audit or deployment.
 metadata:
   origin: forge (pipeline multi-agents blockchain v2, Y. Helal 2026-11-05)
 ---
@@ -16,8 +16,9 @@ Write, compile, and freeze; only the designer changes these files afterwards.
 | Artifact | EVM (Foundry) | Soroban (Rust) |
 |---|---|---|
 | Interfaces | `contracts/interfaces/I<C>.sol` | `#[contractclient]` traits in `contracts/interfaces/` |
-| Invariants | `test/invariants/`, `invariant_INV_n_<name>` with a handler | `test/src/invariants/`, proptest call sequences `invariant_inv_n_<name>` |
-| Critical-function properties | Halmos `check_<name>` in `test/symbolic/` | proptest `check_<name>` in `test/src/symbolic/` |
+| Invariants | `test/invariants/`, `invariant_INV_n_<name>` with a handler | `test/src/invariants/`, soroban-sdk tests over generated call sequences — proptest call sequences `invariant_inv_n_<name>` |
+| Critical-function properties | Halmos `check_<name>` in `test/symbolic/` | Komet (Runtime Verification) `test_<name>` in a Komet test crate `test/symbolic/`: fuzzing (`komet test`) and symbolic proof (`komet prove run`), local |
+| Formal rules (optional) | Certora | Certora Sunbeam rules (Rust specs, proof on the WASM) in `test/symbolic/sunbeam/`; runs on the Certora cloud: security review before use on confidential code |
 
 Critical functions: mint, burn, transfer/transferFrom, forced transfer, redeem/withdraw, freeze, pause, clawback, role grants, upgrade. Each has a property. Each `INV-n` of the design has a test.
 
@@ -41,11 +42,20 @@ forge coverage --report lcov                 # branch coverage on contracts/, ta
 halmos --function check_                     # 0 counterexample
 gambit mutate --json gambit.json             # then run the suite per mutant; target ≥ 80 % killed
 # Soroban
+cd test/symbolic && komet test && komet prove run
 cargo llvm-cov --workspace --branch --lcov --output-path lcov.info
 cargo mutants --workspace
 ```
 
 A surviving mutant is a missing test: write it. Report the score with its tool and commit.
+
+## Soroban specifics
+
+- Base the contracts on OpenZeppelin Stellar Contracts (audited, MIT) and its test helpers where they exist; Stellar's official `stellar-dev-skill` and OpenZeppelin's `setup-stellar-contracts` skill set up the environment.
+- Pin a soroban-sdk version fixed for CVE-2026-32322 (double-withdrawal risk; check the advisory for the fixed version).
+- Test authorisation explicitly with `env.auths()`; use `mock_all_auths` only when authorisation is not the subject of the test.
+- Cover `i128` negatives, zero and max; TTL expiry and archival (advance the ledger); SAC clawback and authorisation flags when a classic asset is involved; resource cost with `env.cost_estimate()`.
+- Local network only (`stellar` with `--network local`); testnet only by explicit decision, never mainnet; never a secret key (`S…`) in tests or config. Community Stellar MCP servers are testnet-only and some expect a secret key: do not use them.
 
 ## Rules
 

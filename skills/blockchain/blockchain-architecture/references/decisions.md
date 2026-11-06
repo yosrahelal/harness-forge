@@ -32,6 +32,7 @@ For each decision: the question, typical options, and the criteria that usually 
 ## 7. Custody, keys and signing
 - **Options**: HSM (on-prem or cloud HSM), MPC custody platform (for example Taurus-PROTECT, Fireblocks, Ripple Custody), multisig smart accounts, combinations.
 - **Criteria**: key ceremonies and backups, FIPS level required, curves supported per chain (secp256k1, ed25519, secp256r1), policy engine location (platform vs your own), signing latency, vendor SDK languages, segregation of client assets.
+- Stellar: admin and issuer accounts as native multisig with weights and thresholds (signers, medium and high thresholds named; no single signer reaching them); issuer flags (`AUTH_REQUIRED`, `AUTH_REVOCABLE`, `AUTH_CLAWBACK_ENABLED`) set at issuance and hard to change later.
 - Validator and node keys are a separate decision from asset keys (block sealing with HSM may depend on plugins: check support).
 
 ## 8. Off-chain data and oracles
@@ -49,7 +50,7 @@ For each decision: the question, typical options, and the criteria that usually 
 
 ## 11. Operations and resilience
 - Availability target and topology (zones, sites, regions), RPO/RTO, backup and restore of node and private state (tested, not just written), monitoring and alerting (block production, peer count, validator participation, contract events), upgrade procedures, incident runbooks with unsigned pause transactions ready.
-- Contract monitoring and relaying: OpenZeppelin Defender has been shut down since 1 July 2026; its successors OpenZeppelin Monitor and Relayer are self-hosted and AGPL v3 (legal review before IS use); KeeperHub is a hosted commercial alternative. Deployment tooling: Foundry scripts plus unsigned Safe batches (Defender Deploy has no open-source replacement).
+- Contract monitoring and relaying: OpenZeppelin Defender has been shut down since 1 July 2026; its successors OpenZeppelin Monitor and Relayer are self-hosted and AGPL v3 (legal review before IS use); KeeperHub is a hosted commercial alternative. On Stellar, OpenZeppelin Monitor is alpha and Relayer support is in development: plan a fallback indexer. Deployment tooling: Foundry scripts plus unsigned Safe batches (Defender Deploy has no open-source replacement).
 - Agent and tooling hygiene in a bank: hosted MCP servers (OpenZeppelin, Tenderly, Blockscout) receive what is sent to them — local versions for confidential code; pinned versions; no key or write RPC in any tool config.
 - Upgrade procedures for clients and contracts, incident response per compromised key.
 

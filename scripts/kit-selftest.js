@@ -107,6 +107,51 @@ put('.pipeline/audit.json', JSON.stringify({ findings: [{ id: 'ACC-1', severity:
 r = run('bash', ['scripts/gates/gate-4.sh'], '', { FAKE_TESTS: results({ 'test_exploit_1_drain()': { status: 'Failure' } }), FAKE_CODE: '1' });
 expect('gate 4 red on open High finding', r.status, 1, r.stdout);
 
+// ---------------------------------------------------------------- Soroban
+const sp = path.join(tmp, 'soroban'); fs.mkdirSync(sp);
+const srun = (cmd, argv, input, extra = {}) => spawnSync(cmd, argv, { cwd: sp, env: Object.assign({}, env, { CLAUDE_PROJECT_DIR: sp }, extra), input, encoding: 'utf8' });
+const sput = (rel, c) => { fs.mkdirSync(path.dirname(path.join(sp, rel)), { recursive: true }); fs.writeFileSync(path.join(sp, rel), c); };
+srun('git', ['init', '-q']); srun('git', ['config', 'user.email', 't@t']); srun('git', ['config', 'user.name', 't']);
+r = srun(process.execPath, [path.join(ROOT, 'scripts', 'blockchain-pipeline.js'), '--project', 'EURxt', '--chain', 'soroban', '--target', sp]);
+expect('soroban install', r.status, 0, r.stdout + r.stderr);
+const variants = fs.readdirSync(path.join(ROOT, 'kits', 'blockchain-pipeline', 'variants', 'soroban', 'claude', 'agents'));
+expect('soroban variants applied', variants.every((f) => /variante Soroban/.test(fs.readFileSync(path.join(sp, '.claude', 'agents', f), 'utf8'))), true);
+expect('soroban Komet dir created', fs.existsSync(path.join(sp, 'test', 'symbolic')), true);
+const schain = (cmd) => srun(process.execPath, ['.claude/hooks/guard-chain.js'], JSON.stringify({ tool_input: { command: cmd } })).status;
+for (const c of ['stellar contract deploy --network mainnet --wasm a.wasm', 'stellar contract invoke --id C1 --network testnet -- mint', 'export STELLAR_SECRET_KEY=x',
+  'stellar keys fund alice --network testnet', 'curl https://soroban-testnet.stellar.org', 'stellar tx send --network public x'])
+  expect(`soroban guard (testnet off) blocks: ${c}`, schain(c), 2);
+expect('soroban guard allows local invoke', schain('stellar contract invoke --id C1 --network local -- mint'), 0);
+const scfg = JSON.parse(fs.readFileSync(path.join(sp, '.pipeline', 'config.json'), 'utf8'));
+fs.writeFileSync(path.join(sp, '.pipeline', 'config.json'), JSON.stringify(Object.assign({}, scfg, { stellar_testnet: true })));
+expect('soroban guard (testnet on) allows testnet invoke', schain('stellar contract invoke --id C1 --network testnet -- mint'), 0);
+expect('soroban guard (testnet on) allows testnet RPC', schain('curl https://soroban-testnet.stellar.org'), 0);
+expect('soroban guard (testnet on) still blocks mainnet', schain('stellar contract deploy --network mainnet --wasm a.wasm'), 2);
+expect('soroban guard (testnet on) still blocks other hosts', schain('curl https://mainnet.sorobanrpc.com'), 2);
+fs.writeFileSync(path.join(sp, '.pipeline', 'config.json'), JSON.stringify(scfg));
+srun('git', ['add', '-A']); srun('git', ['commit', '-qm', 'kit']);
+// gate 1 with a fake stellar build
+fs.writeFileSync(path.join(bin, 'stellar'), '#!/usr/bin/env bash\nif [ "$1 $2" = "contract build" ]; then mkdir -p target && printf wasm > target/eurxt.wasm; fi\nexit 0\n', { mode: 0o755 });
+sput('docs/03-conception.md', '# Conception\nINV-1 supply\nTP-1 mint\n## Écarts et questions\n');
+sput('contracts/interfaces/src/lib.rs', '#[contractclient(name = "Client")]\npub trait Eurxt { fn mint(env: Env, to: Address, amount: i128); fn set_admin(env: Env, a: Address); }\n');
+sput('test/src/invariants/supply.rs', 'fn invariant_inv_1_supply() {}\n');
+sput('test/symbolic/src/lib.rs', 'pub fn test_mint_cap(env: Env) {}\n');
+sput('.pipeline/spec.json', JSON.stringify({ critical_functions: [{ contract: 'eurxt', function: 'mint', property: 'test_mint_cap' }], invariants: [{ id: 'INV-1', test: 'invariant_inv_1_supply' }] }));
+r = srun('bash', ['scripts/gates/gate-1.sh']);
+expect('soroban gate 1 red: set_admin without Komet property', r.status, 1, r.stdout);
+sput('test/symbolic/src/admin.rs', 'pub fn test_set_admin_auth(env: Env) {}\n');
+sput('.pipeline/spec.json', JSON.stringify({ critical_functions: [{ contract: 'eurxt', function: 'mint', property: 'test_mint_cap' }, { contract: 'eurxt', function: 'set_admin', property: 'test_set_admin_auth' }], invariants: [{ id: 'INV-1', test: 'invariant_inv_1_supply' }] }));
+r = srun('bash', ['scripts/gates/gate-1.sh']);
+expect('soroban gate 1 green with Komet properties', r.status, 0, r.stdout);
+// gate 6 reproducible build: manifest hash vs local rebuild
+const wasmHash = require('crypto').createHash('sha256').update('wasm').digest('hex');
+sput('deployments/testnet.json', JSON.stringify({ contracts: [{ name: 'eurxt', address: 'C1', wasm_path: 'target/eurxt.wasm', wasm_hash: wasmHash }], roles: [] }));
+r = srun('bash', ['scripts/gates/gate-6.sh']);
+expect('soroban gate 6 reproducible build check passes', /PASS\s+gate-6\.sources-verified/.test(r.stdout), true, r.stdout);
+sput('deployments/testnet.json', JSON.stringify({ contracts: [{ name: 'eurxt', address: 'C1', wasm_path: 'target/eurxt.wasm', wasm_hash: '00' }], roles: [] }));
+r = srun('bash', ['scripts/gates/gate-6.sh']);
+expect('soroban gate 6 red on WASM hash mismatch', /FAIL\s+gate-6\.sources-verified/.test(r.stdout), true, r.stdout);
+
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`\n${n - failures}/${n} passed`);
 process.exit(failures ? 1 : 0);

@@ -1,0 +1,13 @@
+{
+  "network": "testnet",
+  "network_passphrase": "Test SDF Network ; September 2015",
+  "commit": "<git sha>",
+  "toolchain": { "rust": "<version>", "stellar_cli": "<version>", "soroban_sdk": "<version corrigée CVE-2026-32322>" },
+  "deployer": "G…",
+  "contracts": [
+    { "name": "eurxt", "address": "C…", "wasm_path": "target/wasm32v1-none/release/eurxt.wasm", "wasm_hash": "<sha256 du WASM>", "init_args": {} }
+  ],
+  "roles": [
+    { "contract": "eurxt", "role_name": "admin", "holder": "G<compte multisig à seuils>", "signers": 3, "med_threshold": 2, "high_threshold": 2 }
+  ]
+}
