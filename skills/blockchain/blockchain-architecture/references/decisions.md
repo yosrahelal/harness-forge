@@ -20,11 +20,13 @@ For each decision: the question, typical options, and the criteria that usually 
 
 ## 5. Upgradeability
 - **Options**: immutable plus migration; Transparent proxy; UUPS; Beacon (many instances); Diamond (avoid unless justified).
+- **Policy to record**: who proposes, timelock delay, storage-layout baseline kept per network (`forge inspect … storageLayout`), red team and audit on every upgrade diff, rehearsal on a fork before the proposal.
 - **Criteria**: regulatory need to fix defects, holder trust, governance of upgrades (multisig plus timelock), storage-layout policy (ERC-7201), audit cost of each upgrade.
 
 ## 6. Access control and governance
 - Role catalogue (issuer, minter, burner, compliance operator, pauser, upgrader, admin), separation of duties, no single key with mint and approve rights.
 - Admin transfer two-step with delay; timelock on parameter changes; emergency pause scope; break-glass procedure.
+- **End state of every admin role**: a Safe (threshold and signers named) or a timelock (delay named), never an EOA and never the deployer; the deployment batch renounces deployer roles and is verified after broadcast.
 - Off-chain approval workflow when required: request → approvals (N of M per operation type and amount threshold, no self-approval) → execution; canonical payload (deterministic encoding, hash, nonce, network id, expiry); append-only audit log.
 
 ## 7. Custody, keys and signing
@@ -46,7 +48,10 @@ For each decision: the question, typical options, and the criteria that usually 
 - Settlement interoperability: DvP with a cash leg on-chain (stablecoin, deposit token) or off-chain (payment versus delivery via conditional transfers).
 
 ## 11. Operations and resilience
-- Availability target and topology (zones, sites, regions), RPO/RTO, backup and restore of node and private state (tested, not just written), monitoring and alerting (block production, peer count, validator participation, contract events), upgrade procedures for clients and contracts, incident response per compromised key.
+- Availability target and topology (zones, sites, regions), RPO/RTO, backup and restore of node and private state (tested, not just written), monitoring and alerting (block production, peer count, validator participation, contract events), upgrade procedures, incident runbooks with unsigned pause transactions ready.
+- Contract monitoring and relaying: OpenZeppelin Defender has been shut down since 1 July 2026; its successors OpenZeppelin Monitor and Relayer are self-hosted and AGPL v3 (legal review before IS use); KeeperHub is a hosted commercial alternative. Deployment tooling: Foundry scripts plus unsigned Safe batches (Defender Deploy has no open-source replacement).
+- Agent and tooling hygiene in a bank: hosted MCP servers (OpenZeppelin, Tenderly, Blockscout) receive what is sent to them — local versions for confidential code; pinned versions; no key or write RPC in any tool config.
+- Upgrade procedures for clients and contracts, incident response per compromised key.
 
 ## 12. Data protection and compliance
 - No personal data on-chain; hashes of personal data are still personal data under GDPR when re-identifiable. Store references, keep data erasable off-chain.

@@ -7,6 +7,7 @@ This repository **is** the Forge plugin: agents, skills, commands, rules, hooks,
 - `agents/` core subagents (always loaded) · `roster/<division>/` opt-in personas
 - `skills/<category>/<name>/SKILL.md` (+ `references/`, `scripts/`) · `commands/*.md` slash commands (`/forge:<name>`)
 - `rules/` always-on standards · `hooks/` lifecycle hooks (Node, no deps) · `templates/` · `playbooks/` · `contexts/`
+- `overlays/<path>` Forge sections appended to the imported file at `<path>` by `scripts/apply-overlays.js` (re-run automatically by `sync-upstream.py`)
 - `kits/<name>/` files copied into a project by a script (e.g. `kits/blockchain-pipeline/`, installed by `scripts/blockchain-pipeline.js`); `claude/` in a kit becomes `.claude/` in the project
 - `scripts/` `install.js`, `validate.js`, `catalog.js`, `sync-upstream.py`, `sdd/*.js`
 - `docs/` ARCHITECTURE, WORKFLOWS, SOURCES, INSTALL, CATALOG (generated)
@@ -31,6 +32,6 @@ node scripts/kit-selftest.js             # blockchain-pipeline kit: install, hoo
 
 ## Do not
 
-- Edit imported skills in place for upstream-style changes; prefer a `references/` note or a Forge-specific section, so `scripts/sync-upstream.py` can be re-run.
+- Edit imported files in place (agents, roster, imported skills): put Forge additions in `overlays/<same path>` and run `node scripts/apply-overlays.js`, or add a `references/` note, so `scripts/sync-upstream.py` can be re-run. `validate.js` fails if an overlay is not applied.
 - Add hooks that depend on `jq` or on npm packages.
 - Weaken the guard list in `hooks/scripts/guard-bash.js` without discussing it.

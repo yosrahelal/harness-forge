@@ -10,7 +10,7 @@ Forge réunit en **un plugin Claude Code** (utilisable aussi depuis Codex, Curso
 | [mattpocock/skills](https://github.com/mattpocock/skills) | grilling, TDD aux seams, domain modeling/GLOSSARY, to-spec/to-tickets/triage/wayfinder, handoff, retro, research, prototype |
 | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | Le cycle quotidien spec → plan → build → test → review → ship, interview-me, idea-refine, constraint/doubt/source-driven development, checklists partagées |
 
-Chiffres : **35 commandes**, **29 agents cœur** + **108 personas** opt-in, **135 skills**, **22 jeux de règles**, **5 hooks**, 9 templates, playbooks NEXUS + checklists. Tout est MIT (voir `NOTICE.md`), chaque fichier importé porte son `origin:`.
+Chiffres : **35 commandes**, **29 agents cœur** + **108 personas** opt-in, **137 skills**, **22 jeux de règles**, **5 hooks**, 9 templates, playbooks NEXUS + checklists. Tout est MIT (voir `NOTICE.md`), chaque fichier importé porte son `origin:`.
 
 ```text
 idée ──▶ spec ──▶ plan ──▶ tasks ──▶ build (TDD) ──▶ verify ──▶ review ──▶ converge ──▶ ship ──▶ learn
@@ -91,7 +91,7 @@ agents/        28 sous-agents cœur, chargés par le plugin (planner, architect,
                tdd-guide, test-engineer, build-error-resolver, e2e-runner, reality-checker, orchestrator…)
 roster/        108 personas opt-in par division : languages, engineering, testing, product, design,
                project-management, security, specialized, growth, ml
-skills/        135 skills : workflow (cycle de vie), engineering, languages, agentic, product, ml, blockchain
+skills/        137 skills : workflow (cycle de vie), engineering, languages, agentic, product, ml, blockchain
 commands/      35 commandes /forge:*
 rules/         règles toujours actives : common + 21 langages/frameworks
 hooks/         SessionStart (contexte), guard Bash (bloque force-push, reset --hard, rm -rf /…),
@@ -101,6 +101,7 @@ playbooks/     NEXUS (phases 0-6, runbooks, coordination), checklists (sécurit�
                observabilité, tests, definition of done), patterns d'orchestration, essai SDD
 contexts/      profils dev / review / research
 packs/         packs pour claude.ai (skills zippés + Projets), ex. blockchain-expert
+overlays/      sections Forge ajoutées aux fichiers importés, réappliquées après chaque synchro
 kits/          kits installés dans un projet, ex. blockchain-pipeline (19 agents, hooks, gates 1-6, templates 00-10)
 scripts/       install.js, validate.js, catalog.js, export-claude-web.js, blockchain-pipeline.js, kit-selftest.js, sync-upstream.py, sdd/new-feature.js, sdd/feature-paths.js
 docs/          ARCHITECTURE, WORKFLOWS, SOURCES (décisions de fusion), INSTALL, CATALOG (généré)
@@ -123,6 +124,7 @@ Voir [docs/SOURCES.md](docs/SOURCES.md) pour le détail des choix et [docs/CATAL
 ```bash
 node scripts/validate.js      # unicité des noms, frontmatter, chemins du manifest, résidus upstream
 node scripts/catalog.js       # régénère docs/CATALOG.md
+node scripts/apply-overlays.js  # réapplique overlays/ aux fichiers importés (fait aussi par sync-upstream.py)
 node scripts/kit-selftest.js  # hooks et gates du kit blockchain-pipeline dans un dépôt jetable
 python3 -I scripts/sync-upstream.py --sources <clones> --target .   # resynchroniser depuis les 5 dépôts
 ```

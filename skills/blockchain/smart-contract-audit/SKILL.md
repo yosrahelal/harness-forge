@@ -18,6 +18,8 @@ Write down before reading code:
 
 ## Step 2 — Automated pass (if the sandbox allows)
 
+Run tools locally; never send confidential code to a hosted MCP or third-party API. Slither MCP: `--disable-metrics`. Complementary analysers: Aderyn, Trail of Bits `entry-point-analyzer`; Soroban: `cargo clippy -D warnings`, Scout (CoinFabrik).
+
 ```bash
 pip install slither-analyzer solc-select && solc-select install <version> && solc-select use <version>
 slither . --exclude-dependencies --filter-paths "lib|test|script" --json /tmp/slither.json
@@ -26,7 +28,9 @@ forge test -vv            # existing suite, if Foundry is present
 
 If installation or compilation fails (no network, missing remappings), say so in the report and continue manually. Tool output is a lead, not a finding: triage every hit, keep only what you can justify.
 
-## Step 3 — Manual review
+## Step 3 — Manual review, one class at a time
+
+Do six passes, one section each, so no class is skimmed: **access** (roles, initialisation, ownership, unprotected functions), **calls** (external calls, reentrancy, ERC-777/1155/3525 callbacks, delegatecall), **math** (rounding, decimals, share precision), **upgrade** (proxy, storage layout, initializers, gaps), **economics** (oracle, price, MEV, ordering, griefing), **compliance** (ERC-3643 freeze, allow-lists, forced transfer, MiCA traceability). For a large scope, run the six passes as parallel subagents, then judge (Step 5b).
 
 Read every in-scope function, state-changing first, then views used in critical paths. Walk the checklist in [references/checklist.md](references/checklist.md) for the platform concerned. For each external or public function, answer: who can call it, what it changes, what it calls, what happens if called twice, out of order, with zero, with max, or by a contract.
 
@@ -36,9 +40,14 @@ Read every in-scope function, state-changing first, then views used in critical 
 - Consider flash-loan capital, front-running and sandwiching, oracle manipulation, rounding direction, griefing.
 - For regulated tokens, check that every compliance control holds on **every** transfer path (transfer, transferFrom, permit, mint, burn, forced transfer, batch, bridge).
 
-## Step 5 — Proof of concept
+## Step 5 — Proof of concept and red team
 
-For High and Critical findings, write a Foundry test that demonstrates the exploit when the sandbox can compile it; otherwise give the exact call sequence. Do not inflate severity of what you cannot demonstrate: mark it *à confirmer*.
+- **Proof or Info.** Every finding above Informational gets a test that demonstrates it: `test_proof_<ID>` in `test/audit/<class>/`, passing while the bug exists. No test possible (sandbox, missing deps) → give the exact call sequence and mark it *à confirmer*; never rate it above what you demonstrated.
+- **Red team rounds** (pre-deployment audits): at least five attack hypotheses per round as `test_exploit_<id>_<name>` tests asserting the attacker's gain on a local Anvil fork. Passing = live exploit (quantify the impact); failing = a defence, keep it. Once fixed: rename `test_regression_<id>_<name>`, invert the assertion, keep it forever. Stop after three consecutive clean rounds.
+
+## Step 5b — Judge
+
+Run every proof. Merge duplicates across classes (most precise location wins). Set the final severity with the matrix below and a one-line reason. Route each finding: code → developer; interface, invariant or test plan → designer; structure (custody, privacy, network) → architect. Add live red-team exploits as confirmed findings.
 
 ## Step 6 — Report
 
@@ -57,6 +66,7 @@ Use [references/report-template.md](references/report-template.md). Produce Mark
 ## Rules
 
 - No finding without: location (file:line), scenario (preconditions → calls → result), impact, fix.
+- An internal audit never replaces the external audit required before mainnet.
 - Never write "the contract is secure". Write what was reviewed, how, and what was not covered.
 - Privileged-role abuse is in scope as a **centralisation risk** even when the role is "trusted": state it, rate it separately.
 - Prefer audited libraries (OpenZeppelin, the standard's reference implementation) in recommendations; give code for the fix when it is short.
@@ -64,5 +74,7 @@ Use [references/report-template.md](references/report-template.md). Produce Mark
 
 ## Deeper references
 
+- `smart-contract-testing` skill — executable spec, invariants, mutation score; `smart-contract-release` skill — deployment without keys, monitoring, upgrades.
+- `playbooks/blockchain-pipeline.md` — the full multi-agent pipeline (audit swarm, judge, scripted gates).
 - [references/checklist.md](references/checklist.md) — EVM, Soroban and Anchor checklists, regulated-token controls.
 - [references/report-template.md](references/report-template.md) — audit report skeleton (French).

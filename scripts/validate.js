@@ -101,6 +101,11 @@ if (fs.existsSync(path.join(ROOT, 'kits'))) {
     }
   }
 }
+// overlays: every overlays/<path> applied to <path>
+if (fs.existsSync(path.join(ROOT, 'overlays'))) {
+  const r = require('child_process').spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'apply-overlays.js'), '--check'], { encoding: 'utf8' });
+  for (const line of (r.stderr || '').split('\n').filter(Boolean)) err(line.replace(/^ERROR\s+/, ''));
+}
 // plugin manifest
 const plugin = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8'));
 for (const p of [...plugin.agents, ...plugin.skills, ...plugin.commands, plugin.hooks]) {

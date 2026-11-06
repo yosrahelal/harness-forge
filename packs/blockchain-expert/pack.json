@@ -11,6 +11,16 @@
     "blockchain-docs",
     "blockchain-deck",
     {
+      "name": "smart-contract-testing",
+      "description": "Writes and runs smart-contract tests from the spec: invariants, Halmos/proptest properties, fuzz, fork tests, coverage, mutation score. Use to specify or test contracts.",
+      "note": "The sandbox may lack forge, halmos or gambit: write the tests and the exact commands, and say which measurements could not be run."
+    },
+    {
+      "name": "smart-contract-release",
+      "description": "Prepares contract deployment, monitoring and upgrades without keys: dry-run, manifest, unsigned Safe batch, role handover, monitor rules, storage-checked upgrades. Use to deploy or upgrade.",
+      "note": "Never ask for a private key or RPC URL. Produce the script, manifest and unsigned batch as files for the user to review and sign."
+    },
+    {
       "name": "council",
       "description": "Convenes a four-voice council (own view, Skeptic, Pragmatist, Critic) for ambiguous decisions and go/no-go calls. Use when several valid paths exist and dissent is needed before choosing.",
       "note": "There are no subagents here. Write the Skeptic, Pragmatist and Critic voices one after the other, each drafted from the question and the facts block only, before writing your own view, so that your opinion does not anchor them. Then synthesise as described above."

@@ -45,6 +45,12 @@ Create `.forge/pipeline/<feature>.md` at start and update it after every phase: 
 
 Modes: **Full** (all phases, new product), **Sprint** (phases 2–5 on an existing spec), **Micro** (one task: build → QA → review). Pick the smallest mode that fits; say which one you chose and why.
 
+## Smart-contract projects
+
+A project that deploys smart contracts (Solidity, Soroban, Anchor) to a real network does not use the generic phase map: propose the blockchain pipeline (`/forge:blockchain-pipeline`, `playbooks/blockchain-pipeline.md`). It adds an executable spec before code, a red team, an audit swarm with a judge, scripted gates that decide each step, an external audit, and release, run and upgrade stages that never hold a key. If the user declines, still apply in Phase 3–4: `smart-contract-testing` (mutation and fork tests), `smart-contract-audit` (proof per finding), `smart-contract-release` (unsigned deployment), and never delegate a command that signs or broadcasts.
+
+**Gates are scripts when possible.** Prefer a command whose exit code decides (build, tests, coverage threshold, static analysis) over an agent's opinion; an agent's PASS without evidence is not a pass.
+
 ## How to delegate
 
 Use the Agent tool with `subagent_type` set to the agent name (plugin-scoped names look like `forge:planner`; bare names work for manual installs). Give each subagent:

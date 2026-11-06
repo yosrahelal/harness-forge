@@ -501,6 +501,10 @@ def main():
             write(dp, TRANSFORMS[repo](read(sp)))
         report["playbooks"].append(dest)
 
+    # ---- Forge overlays (sections appended to imported files, kept in overlays/) ----
+    import subprocess
+    subprocess.run(["node", str(Path(__file__).resolve().parent / "apply-overlays.js"), "--root", str(T)], cwd=T, check=False)
+
     # ---- provenance manifest ----
     write(T / "upstream" / "manifest.json", json.dumps(report, indent=2) + "\n")
     print(f"skills: {len(report['skills'])}  core agents: {len(report['agents'])}  "

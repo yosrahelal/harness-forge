@@ -6,10 +6,10 @@ Ce pack sert sur Claude web, desktop et mobile, sans Claude Code. Il couvre l'an
 
 | Élément | Où | Rôle |
 |---|---|---|
-| 9 skills `.zip` | `skills/*.zip` | À ajouter une fois, ils servent dans toutes les conversations |
+| 11 skills `.zip` | `skills/*.zip` | À ajouter une fois, ils servent dans toutes les conversations |
 | 3 Projets | `projects/<nom>/` | Instructions à coller et fichiers de connaissance à ajouter |
 
-Skills : `blockchain-project-analysis`, `smart-contract-audit`, `blockchain-architecture`, `tokenization-domain`, `blockchain-docs`, `blockchain-deck`, `council`, `grilling`, `market-research`. Le détail de chaque skill est dans `CONTENTS.md`.
+Skills : `blockchain-project-analysis`, `smart-contract-audit`, `blockchain-architecture`, `tokenization-domain`, `blockchain-docs`, `blockchain-deck`, `smart-contract-testing`, `smart-contract-release`, `council`, `grilling`, `market-research`. Le détail de chaque skill est dans `CONTENTS.md`.
 
 Les fichiers Word, PowerPoint, Excel et PDF sont produits par les skills intégrés de Claude (docx, pptx, xlsx, pdf). Les skills du pack apportent la méthode, la structure et le style.
 
